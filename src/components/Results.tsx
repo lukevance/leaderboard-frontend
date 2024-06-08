@@ -1,56 +1,87 @@
-import React from 'react';
-import { Link, Route, Routes, useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
-interface Race {
+interface RaceResult {
+  id: string;
+  overallPlace: number;
+  // bib: string;
   name: string;
-  date: string;
-  results: { name: string; time: string }[];
+  divisionPlace: string;
+  division: string;
+  fromCity: string;
+  fromProvState: string;
+  teamName: string;
+  gunTime: string;
+  overallPace: string;
 }
 
-const races: Race[] = [
-  {
-    name: 'Race 1',
-    date: '2024-01-15',
-    results: [
-      { name: 'Alice', time: '25:30' },
-      { name: 'Bob', time: '26:15' },
-      { name: 'Charlie', time: '27:45' },
-    ],
-  },
-  {
-    name: 'Race 2',
-    date: '2024-02-20',
-    results: [
-      { name: 'Alice', time: '24:50' },
-      { name: 'Bob', time: '25:10' },
-      { name: 'Charlie', time: '26:30' },
-    ],
-  },
-  // Add more mock data as needed
-];
+interface Race {
+  raceId: string;
+  raceName: string;
+  date: string;
+  // published: boolean;
+  // results_provider: string;
+  // results_url: string;
+  results: RaceResult[];
+  resultsCount: number;
+}
 
 const RaceDetail: React.FC = () => {
   const { raceId } = useParams<{ raceId: string }>();
-  const raceIndex = parseInt(raceId || '0', 10);
-  const race = races[raceIndex];
+  const [race, setRace] = useState<Race | null>(null);
+  const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:8080';
+
+  useEffect(() => {
+    const fetchRaceData = async () => {
+      try {
+        const response = await fetch(`${serverUrl}/api/race-results/${raceId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch race data');
+        }
+        const raceData = await response.json();
+        setRace(raceData);
+      } catch (error) {
+        console.error('Error fetching race data:', error);
+      }
+    };
+
+    fetchRaceData();
+  }, [raceId, serverUrl]);
+
+  if (!race) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
-      <h3>{race.name} - {race.date}</h3>
+      <h3>{race.raceName} - {race.date}</h3>
+      <p>Total Participants: {race.resultsCount}</p>
       <table>
         <thead>
           <tr>
             <th>Position</th>
             <th>Name</th>
-            <th>Time</th>
+            <th>Division Place</th>
+            <th>Division</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Team Name</th>
+            <th>Gun Time</th>
+            <th>Overall Pace</th>
           </tr>
         </thead>
         <tbody>
-          {race.results.map((result, resultIndex) => (
-            <tr key={resultIndex}>
-              <td>{resultIndex + 1}</td>
+          {race.results.map((result) => (
+            <tr key={result.id}>
+              <td>{result.overallPlace}</td>
               <td>{result.name}</td>
-              <td>{result.time}</td>
+              <td>{result.divisionPlace}</td>
+              <td>{result.division}</td>
+              <td>{result.fromCity}</td>
+              <td>{result.fromProvState}</td>
+              <td>{result.teamName}</td>
+              <td>{result.gunTime}</td>
+              <td>{result.overallPace}</td>
             </tr>
           ))}
         </tbody>
@@ -59,24 +90,4 @@ const RaceDetail: React.FC = () => {
   );
 };
 
-const RaceResults: React.FC = () => {
-  return (
-    <div>
-      <h2>Race Results</h2>
-      <nav>
-        <ul>
-          {races.map((race, index) => (
-            <li key={index}>
-              <Link to={`/race-results/${index}`}>{race.name}</Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      <Routes>
-        <Route path=":raceId" element={<RaceDetail />} />
-      </Routes>
-    </div>
-  );
-};
-
-export default RaceResults;
+export default RaceDetail;
