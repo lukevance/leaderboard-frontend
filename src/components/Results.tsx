@@ -29,6 +29,7 @@ interface Race {
 const RaceDetail: React.FC = () => {
   const { raceId } = useParams<{ raceId: string }>();
   const [race, setRace] = useState<Race | null>(null);
+  const [filter, setFilter] = useState<'all' | 'wicked'>('all');
   const serverUrl = process.env.REACT_APP_SERVER_URL || 'http://localhost:8080';
 
   useEffect(() => {
@@ -48,37 +49,50 @@ const RaceDetail: React.FC = () => {
     fetchRaceData();
   }, [raceId, serverUrl]);
 
+  const toggleFilter = () => {
+    setFilter(filter === 'all' ? 'wicked' : 'all');
+  };
+
   if (!race) {
     return <div>Loading...</div>;
   }
 
+  const filteredResults = filter === 'wicked'
+    ? race.results.filter(result => result.teamName === 'Wicked' || result.teamName.toLowerCase() === 'wicked running club')
+    : race.results;
+
   return (
     <div>
       <h3>{race.raceName} - {race.date}</h3>
-      <p>Total Participants: {race.resultsCount}</p>
+      <p>Total Participants: {filteredResults.length}</p>
+      <button onClick={toggleFilter}>
+        {filter === 'all' ? 'Show Wicked Running Club' : 'Show All Runners'}
+      </button>
       <table>
         <thead>
           <tr>
             <th>Position</th>
+            {/* <th>Bib</th> */}
             <th>Name</th>
             <th>Division Place</th>
             <th>Division</th>
-            <th>City</th>
-            <th>State</th>
+            {/* <th>City</th>
+            <th>State</th> */}
             <th>Team Name</th>
             <th>Gun Time</th>
             <th>Overall Pace</th>
           </tr>
         </thead>
         <tbody>
-          {race.results.map((result) => (
+          {filteredResults.map((result) => (
             <tr key={result.id}>
               <td>{result.overallPlace}</td>
+              {/* <td>{result.bib}</td> */}
               <td>{result.name}</td>
               <td>{result.divisionPlace}</td>
               <td>{result.division}</td>
-              <td>{result.fromCity}</td>
-              <td>{result.fromProvState}</td>
+              {/* <td>{result.fromCity}</td>
+              <td>{result.fromProvState}</td> */}
               <td>{result.teamName}</td>
               <td>{result.gunTime}</td>
               <td>{result.overallPace}</td>
